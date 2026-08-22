@@ -1,0 +1,18 @@
+[package]
+name = "backuper-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "backuperctl"
+path = "src/main.rs"
+
+[dependencies]
+backuper-core = { path = "../backuper-core" }
+tokio = { workspace = true }
+clap = { workspace = true }
+reqwest = { workspace = true }
+tracing = { workspace = true }

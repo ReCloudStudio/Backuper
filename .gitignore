@@ -1,0 +1,22 @@
+# Rust
+target/
+*.rs.bk
+
+# Nuxt / Bun / Node
+node_modules/
+.nuxt/
+.output/
+dist/
+*.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Env / secrets
+.env
+secrets/*.dec*
