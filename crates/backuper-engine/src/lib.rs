@@ -4,6 +4,7 @@ pub mod local;
 pub mod mysql;
 pub mod postgres;
 pub mod runner;
+pub mod ssh;
 
 pub mod executor;
 pub mod notify;
