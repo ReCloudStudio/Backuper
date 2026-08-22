@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use backuper_core::error::BackuperError;
-use backuper_core::storage::StorageBackend;
+use backuper_core::storage::{ObjectMeta, StorageBackend};
+use chrono::{DateTime, Utc};
 use russh::client::{self, Handler};
 use russh::keys::{PrivateKeyWithHashAlg, PublicKey, load_secret_key};
 use russh_sftp::client::SftpSession;
@@ -95,7 +96,7 @@ impl SshStorage {
         Ok(())
     }
 
-    async fn try_sftp(&self, local_path: &Path, dest: &Path) -> Result<(), BackuperError> {
+    async fn sftp_session(&self) -> Result<SftpSession, BackuperError> {
         let key_path = self.key_path()?;
         let key_pair = load_secret_key(&key_path, None)
             .map_err(|e| BackuperError::Storage(format!("加载 SSH 私钥失败: {e}")))?;
@@ -130,9 +131,13 @@ impl SshStorage {
             .await
             .map_err(|e| BackuperError::Storage(format!("启动 SFTP 子系统失败: {e}")))?;
 
-        let sftp = SftpSession::new(channel.into_stream())
+        SftpSession::new(channel.into_stream())
             .await
-            .map_err(|e| BackuperError::Storage(format!("SFTP 会话建立失败: {e}")))?;
+            .map_err(|e| BackuperError::Storage(format!("SFTP 会话建立失败: {e}")))
+    }
+
+    async fn try_sftp(&self, local_path: &Path, dest: &Path) -> Result<(), BackuperError> {
+        let sftp = self.sftp_session().await?;
 
         if let Some(parent) = self.path.parent() {
             let _ = sftp.create_dir(parent.to_string_lossy().to_string()).await;
@@ -236,6 +241,45 @@ impl StorageBackend for SshStorage {
             }
         }
 
+        Ok(())
+    }
+
+    async fn list(&self, prefix: &str) -> Result<Vec<ObjectMeta>, BackuperError> {
+        let sftp = self.sftp_session().await?;
+        let dir = self.path.to_string_lossy().to_string();
+        let entries = sftp
+            .read_dir(&dir)
+            .await
+            .map_err(|e| BackuperError::Storage(format!("列出远程目录失败: {e}")))?;
+
+        let mut objects = Vec::new();
+        for entry in entries {
+            if !entry.file_type().is_file() {
+                continue;
+            }
+            let name = entry.file_name();
+            if !name.starts_with(prefix) {
+                continue;
+            }
+            let mtime = entry
+                .metadata()
+                .mtime
+                .and_then(|t| DateTime::from_timestamp(t as i64, 0))
+                .unwrap_or_else(Utc::now);
+            objects.push(ObjectMeta {
+                key: name,
+                last_modified: mtime,
+            });
+        }
+        Ok(objects)
+    }
+
+    async fn delete(&self, remote_key: &str) -> Result<(), BackuperError> {
+        let sftp = self.sftp_session().await?;
+        let path = self.path.join(remote_key).to_string_lossy().to_string();
+        sftp.remove_file(&path)
+            .await
+            .map_err(|e| BackuperError::Storage(format!("删除远程文件失败: {e}")))?;
         Ok(())
     }
 }

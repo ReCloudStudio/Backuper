@@ -26,5 +26,9 @@ pub async fn run_job(
     let result = crate::runner::run_once(rule, &*source, &*backend, &work_dir).await?;
     info!(rule_id = %rule.id, key = %result.remote_key, "规则执行完成");
 
+    if let Err(e) = crate::retention::cleanup(&*backend, rule, Some(&result.remote_key)).await {
+        tracing::warn!(rule_id = %rule.id, error = %e, "retention 清理失败");
+    }
+
     Ok(result)
 }
