@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 fn default_data_dir() -> PathBuf {
@@ -105,9 +105,11 @@ fn default_mysql_port() -> u16 {
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum StorageConfig {
     Local {
+        id: String,
         path: PathBuf,
     },
     Ssh {
+        id: String,
         host: String,
         #[serde(default = "default_ssh_port")]
         port: u16,
@@ -118,6 +120,14 @@ pub enum StorageConfig {
     },
 }
 
+impl StorageConfig {
+    pub fn id(&self) -> &str {
+        match self {
+            StorageConfig::Local { id, .. } | StorageConfig::Ssh { id, .. } => id,
+        }
+    }
+}
+
 fn default_ssh_port() -> u16 {
     22
 }
@@ -125,12 +135,33 @@ fn default_ssh_port() -> u16 {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum NotifierConfig {
-    Webhook { url: String },
-    Discord { token: String, channel_id: String },
-    Telegram { token: String, chat_id: String },
+    Webhook {
+        id: String,
+        url: String,
+    },
+    Discord {
+        id: String,
+        token: String,
+        channel_id: String,
+    },
+    Telegram {
+        id: String,
+        token: String,
+        chat_id: String,
+    },
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+impl NotifierConfig {
+    pub fn id(&self) -> &str {
+        match self {
+            NotifierConfig::Webhook { id, .. }
+            | NotifierConfig::Discord { id, .. }
+            | NotifierConfig::Telegram { id, .. } => id,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct RetentionConfig {
     #[serde(default)]
     pub keep_last: Option<usize>,

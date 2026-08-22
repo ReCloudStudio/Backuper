@@ -18,8 +18,8 @@ pub async fn run_once<S, B>(
     work_dir: &Path,
 ) -> Result<RunResult, BackuperError>
 where
-    S: Source,
-    B: StorageBackend,
+    S: Source + ?Sized,
+    B: StorageBackend + ?Sized,
 {
     tokio::fs::create_dir_all(work_dir).await?;
 
