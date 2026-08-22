@@ -12,7 +12,9 @@ pub async fn execute(inner: Arc<InnerState>, rule: &Rule) -> Result<RunResult, B
     let job_id = insert_job(&inner.pool, &rule.id).await?;
     info!(rule_id = %rule.id, job_id, "开始执行任务");
 
+    let notifiers = config.notifiers.clone();
     let outcome = backuper_engine::executor::run_job(&config, rule, &inner.data_dir).await;
+    drop(config);
 
     match outcome {
         Ok(result) => {
@@ -25,6 +27,14 @@ pub async fn execute(inner: Arc<InnerState>, rule: &Rule) -> Result<RunResult, B
             )
             .await?;
             info!(rule_id = %rule.id, job_id, key = %result.remote_key, "任务执行成功");
+            let _ = backuper_engine::notify::send_all(
+                &notifiers,
+                true,
+                &rule.id,
+                Some(&result.remote_key),
+                None,
+            )
+            .await;
             Ok(result)
         }
         Err(ref e) => {
@@ -33,6 +43,9 @@ pub async fn execute(inner: Arc<InnerState>, rule: &Rule) -> Result<RunResult, B
                 error!(job_id, error = %err, "记录任务失败状态失败");
             }
             error!(rule_id = %rule.id, job_id, error = %e, "任务执行失败");
+            let _ =
+                backuper_engine::notify::send_all(&notifiers, false, &rule.id, None, Some(&msg))
+                    .await;
             outcome
         }
     }
