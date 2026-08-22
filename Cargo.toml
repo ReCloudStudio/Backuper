@@ -33,3 +33,6 @@ reqwest = { version = "0.12", features = ["json"] }
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate"] }
 russh = "0.51"
 russh-sftp = "2.0"
+tar = "0.4"
+zstd = "0.13"
+tempfile = "3"
