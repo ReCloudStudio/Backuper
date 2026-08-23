@@ -29,3 +29,13 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace --all-targets
+      - name: Build release
+        run: cargo build --release
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: backuper-binaries
+          path: |
+            target/release/backuperd
+            target/release/backuperctl
+          if-no-files-found: error
