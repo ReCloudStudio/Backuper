@@ -10,8 +10,8 @@ pub struct Args {
     #[arg(short, long)]
     pub data_dir: Option<PathBuf>,
 
-    #[arg(short, long, default_value = "127.0.0.1:8080")]
-    pub listen: String,
+    #[arg(short, long)]
+    pub listen: Option<String>,
 
     #[arg(long)]
     pub webui_dir: Option<PathBuf>,

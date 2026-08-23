@@ -21,11 +21,17 @@ use backuper_core::config::Config;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .init();
 
     let args = Args::parse();
     let config_content = tokio::fs::read_to_string(&args.config).await?;
     let config = Config::load(&config_content)?;
+    let listen = args
+        .listen
+        .clone()
+        .unwrap_or_else(|| config.global.listen.clone());
 
     let data_dir = args
         .data_dir
@@ -69,8 +75,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         app.fallback(crate::assets::serve)
     };
 
-    let listener = tokio::net::TcpListener::bind(&args.listen).await?;
-    info!(addr = %args.listen, "HTTP API 监听中");
+    let listener = tokio::net::TcpListener::bind(&listen).await?;
+    info!(addr = %listen, "HTTP API 监听中");
 
     let server = axum::serve(listener, app);
     let server_handle = tokio::spawn(server.into_future());
