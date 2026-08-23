@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt -- --check
+        language: system
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy --workspace --all-targets -- -D warnings
+        language: system
+        pass_filenames: false
+      - id: cargo-test
+        name: cargo test
+        entry: cargo test --workspace --all-targets
+        language: system
+        pass_filenames: false
+      - id: bun-build
+        name: bun build webui
+        entry: sh -c 'cd webui && bun install && bun run build'
+        language: system
+        pass_filenames: false
