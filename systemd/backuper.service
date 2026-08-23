@@ -1,13 +1,21 @@
 [Unit]
 Description=Backuper daemon
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
+User=backuper
+Group=backuper
+RuntimeDirectory=backuper
+StateDirectory=backuper
+WorkingDirectory=/var/lib/backuper
+Environment="RUST_LOG=info"
 ExecStart=/usr/local/bin/backuperd --config /etc/backuper/backuper.toml
 ExecReload=/bin/kill -HUP $MAINPID
-PIDFile=/var/run/backuper/backuper.pid
+PIDFile=/run/backuper/backuper.pid
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
