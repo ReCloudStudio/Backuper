@@ -69,6 +69,18 @@ username = "backuper"
 # key = "/etc/backuper/id_ed25519"
 path = "/srv/backups"
 
+# S3 / R2 兼容对象存储后端
+# [[storage]]
+# id = "remote_s3"
+# type = "s3"
+# endpoint = "https://xxx.r2.cloudflarestorage.com"
+# region = "auto"
+# bucket = "backups"
+# prefix = "backuper"
+# access_key = "ACCESS_KEY"
+# secret_key = "SECRET_KEY"
+# path_style = false
+
 # 通知渠道示例（取消注释即可启用）
 # [[notifier]]
 # id = "ops_hook"

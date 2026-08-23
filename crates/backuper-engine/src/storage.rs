@@ -21,5 +21,6 @@ pub fn build_storage(config: &StorageConfig) -> Result<Box<dyn StorageBackend>, 
             key.clone(),
             path.clone(),
         ))),
+        StorageConfig::S3 { .. } => Ok(Box::new(crate::s3::S3Storage::new(config)?)),
     }
 }

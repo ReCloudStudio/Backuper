@@ -118,14 +118,33 @@ pub enum StorageConfig {
         key: Option<PathBuf>,
         path: PathBuf,
     },
+    S3 {
+        id: String,
+        endpoint: String,
+        #[serde(default = "default_s3_region")]
+        region: String,
+        bucket: String,
+        #[serde(default)]
+        prefix: Option<String>,
+        access_key: String,
+        secret_key: String,
+        #[serde(default)]
+        path_style: bool,
+    },
 }
 
 impl StorageConfig {
     pub fn id(&self) -> &str {
         match self {
-            StorageConfig::Local { id, .. } | StorageConfig::Ssh { id, .. } => id,
+            StorageConfig::Local { id, .. }
+            | StorageConfig::Ssh { id, .. }
+            | StorageConfig::S3 { id, .. } => id,
         }
     }
+}
+
+fn default_s3_region() -> String {
+    "us-east-1".to_string()
 }
 
 fn default_ssh_port() -> u16 {
