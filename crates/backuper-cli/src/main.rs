@@ -42,6 +42,19 @@ fn daemon_path() -> PathBuf {
     exe.join("backuperd")
 }
 
+fn http_client(config: &Config) -> reqwest::Client {
+    let mut headers = reqwest::header::HeaderMap::new();
+    if let Some(token) = &config.global.api_token
+        && let Ok(value) = reqwest::header::HeaderValue::from_str(&format!("Bearer {token}"))
+    {
+        headers.insert(reqwest::header::AUTHORIZATION, value);
+    }
+    reqwest::Client::builder()
+        .default_headers(headers)
+        .build()
+        .unwrap_or_default()
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
@@ -119,8 +132,8 @@ async fn stop_daemon(config: &Config) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 async fn reload_daemon(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let client = reqwest::Client::new();
-    let url = format!("{}/reload", base_url(config));
+    let client = http_client(config);
+    let url = format!("{}/api/reload", base_url(config));
     let resp = client.post(url).send().await?;
     if resp.status().is_success() {
         println!("配置已重载");
@@ -132,8 +145,8 @@ async fn reload_daemon(config: &Config) -> Result<(), Box<dyn std::error::Error>
 }
 
 async fn run_rule(config: &Config, rule_id: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let client = reqwest::Client::new();
-    let url = format!("{}/run/{}", base_url(config), rule_id);
+    let client = http_client(config);
+    let url = format!("{}/api/run/{}", base_url(config), rule_id);
     let resp = client.post(url).send().await?;
     if resp.status().is_success() {
         println!("任务 {} 已提交", rule_id);
@@ -145,7 +158,15 @@ async fn run_rule(config: &Config, rule_id: &str) -> Result<(), Box<dyn std::err
 }
 
 async fn show_status(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::get(format!("{}/status", base_url(config))).await?;
+    let client = http_client(config);
+    let resp = client
+        .get(format!("{}/api/status", base_url(config)))
+        .send()
+        .await?;
+    if !resp.status().is_success() {
+        let text = resp.text().await.unwrap_or_default();
+        return Err(format!("查询状态失败: {text}").into());
+    }
     let text = resp.text().await?;
     println!("{}", text);
     Ok(())
