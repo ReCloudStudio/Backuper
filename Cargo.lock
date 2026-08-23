@@ -316,6 +316,8 @@ dependencies = [
  "tokio",
  "tokio-cron-scheduler",
  "tracing",
+ "tracing-subscriber",
+ "uuid",
  "zstd",
 ]
 
