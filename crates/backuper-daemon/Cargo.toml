@@ -17,6 +17,7 @@ tokio = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["fs"] }
+rust-embed = { workspace = true, features = ["interpolate-folder-path", "mime-guess"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 sqlx = { workspace = true }

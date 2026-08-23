@@ -1,5 +1,6 @@
 mod api;
 mod args;
+mod assets;
 mod db;
 mod job;
 mod pid;
@@ -58,15 +59,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let app = api::router(state.clone());
-    let app = if args.webui_dir.exists() {
-        let index = args.webui_dir.join("index.html");
+    let app = if let Some(webui_dir) = args.webui_dir.as_ref().filter(|p| p.exists()) {
+        let index = webui_dir.join("index.html");
         app.fallback_service(
-            tower_http::services::ServeDir::new(&args.webui_dir)
+            tower_http::services::ServeDir::new(webui_dir)
                 .fallback(tower_http::services::ServeFile::new(&index)),
         )
     } else {
-        tracing::warn!(path = %args.webui_dir.display(), "WebUI 目录不存在，跳过静态文件服务");
-        app
+        app.fallback(crate::assets::serve)
     };
 
     let listener = tokio::net::TcpListener::bind(&args.listen).await?;

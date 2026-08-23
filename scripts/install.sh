@@ -8,23 +8,19 @@ USER_NAME="backuper"
 
 cd "$(dirname "$0")/.."
 
+if command -v bun >/dev/null 2>&1; then
+    echo "Building WebUI..."
+    (cd webui && bun install && bun run build)
+else
+    echo "bun not found; WebUI will not be embedded"
+fi
+
 echo "Building release binaries..."
 cargo build --release --bin backuperd --bin backuperctl
 
 echo "Installing binaries..."
 install -Dm755 target/release/backuperd "${PREFIX}/bin/backuperd"
 install -Dm755 target/release/backuperctl "${PREFIX}/bin/backuperctl"
-
-WEBUI_DIR="/usr/share/backuper/webui"
-if command -v bun >/dev/null 2>&1; then
-    echo "Building WebUI..."
-    (cd webui && bun install && bun run build)
-    echo "Installing WebUI assets..."
-    install -dDm755 "${WEBUI_DIR}"
-    cp -r webui/.output/public/. "${WEBUI_DIR}/"
-else
-    echo "bun not found; skipping WebUI build"
-fi
 
 echo "Installing systemd service..."
 install -Dm644 systemd/backuper.service /etc/systemd/system/backuper.service
