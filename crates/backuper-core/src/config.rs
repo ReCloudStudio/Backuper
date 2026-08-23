@@ -34,6 +34,8 @@ pub struct GlobalConfig {
     pub data_dir: PathBuf,
     #[serde(default = "default_listen")]
     pub listen: String,
+    #[serde(default)]
+    pub api_token: Option<String>,
 }
 
 impl Default for GlobalConfig {
@@ -41,6 +43,7 @@ impl Default for GlobalConfig {
         Self {
             data_dir: default_data_dir(),
             listen: default_listen(),
+            api_token: None,
         }
     }
 }

@@ -54,9 +54,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config_path: args.config.clone(),
         scheduler: Arc::new(RwLock::new(scheduler)),
         job_ids: Arc::new(RwLock::new(job_ids)),
+        api_token: config.read().await.global.api_token.clone(),
     });
 
-    let app = api::router().with_state(state.clone());
+    let app = api::router(state.clone());
+    let app = if args.webui_dir.exists() {
+        let index = args.webui_dir.join("index.html");
+        app.fallback_service(
+            tower_http::services::ServeDir::new(&args.webui_dir)
+                .fallback(tower_http::services::ServeFile::new(&index)),
+        )
+    } else {
+        tracing::warn!(path = %args.webui_dir.display(), "WebUI 目录不存在，跳过静态文件服务");
+        app
+    };
+
     let listener = tokio::net::TcpListener::bind(&args.listen).await?;
     info!(addr = %args.listen, "HTTP API 监听中");
 

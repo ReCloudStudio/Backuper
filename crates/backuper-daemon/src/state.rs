@@ -17,4 +17,5 @@ pub struct AppState {
     pub config_path: PathBuf,
     pub scheduler: Arc<RwLock<JobScheduler>>,
     pub job_ids: Arc<RwLock<Vec<Uuid>>>,
+    pub api_token: Option<String>,
 }

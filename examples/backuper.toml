@@ -4,6 +4,8 @@
 [global]
 data_dir = "/var/lib/backuper"
 listen = "127.0.0.1:8080"
+# 设置 api_token 后，/api/* 端点需要 Bearer Token 鉴权
+# api_token = "CHANGE_ME"
 
 # 示例规则：备份本地目录
 [[rule]]

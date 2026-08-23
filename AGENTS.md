@@ -72,8 +72,7 @@ cargo fmt --check
 
 ## 当前限制 / 后续补充
 
-- 已实现：workspace 骨架、配置解析、directory / PostgreSQL / MySQL 备份源、local / SSH / S3 兼容对象存储后端、retention 清理、cron 调度、守护进程生命周期、HTTP API、CLI 交互、SQLite 任务记录、Webhook / Discord / Telegram 通知、systemd 服务模板与安装脚本。
+- 已实现：workspace 骨架、配置解析、directory / PostgreSQL / MySQL 备份源、local / SSH / S3 兼容对象存储后端、retention 清理、cron 调度、守护进程生命周期、HTTP API、CLI 交互、SQLite 任务记录、Webhook / Discord / Telegram 通知、systemd 服务模板与安装脚本、WebUI 鉴权与 release 托管。
 - 后续应补充：
   - CI / pre-commit 配置。
   - 集成测试 fixture（MySQL / PostgreSQL / SSH / S3）。
-  - WebUI 鉴权与 release 托管。

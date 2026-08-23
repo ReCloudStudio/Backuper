@@ -11,7 +11,7 @@ RuntimeDirectory=backuper
 StateDirectory=backuper
 WorkingDirectory=/var/lib/backuper
 Environment="RUST_LOG=info"
-ExecStart=/usr/local/bin/backuperd --config /etc/backuper/backuper.toml
+ExecStart=/usr/local/bin/backuperd --config /etc/backuper/backuper.toml --webui-dir /usr/share/backuper/webui
 ExecReload=/bin/kill -HUP $MAINPID
 PIDFile=/run/backuper/backuper.pid
 Restart=on-failure

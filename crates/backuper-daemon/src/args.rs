@@ -12,4 +12,7 @@ pub struct Args {
 
     #[arg(short, long, default_value = "127.0.0.1:8080")]
     pub listen: String,
+
+    #[arg(long, default_value = "./webui/.output/public")]
+    pub webui_dir: PathBuf,
 }

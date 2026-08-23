@@ -1,10 +1,13 @@
 use axum::{
     Router,
+    body::Body,
     extract::{Path, State},
     http::StatusCode,
+    middleware::{Next, from_fn_with_state},
     response::{IntoResponse, Json},
     routing::{get, post},
 };
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::sync::Arc;
 use tracing::error;
@@ -14,13 +17,64 @@ use crate::job::execute as execute_job;
 use crate::scheduler::reload as reload_config;
 use crate::state::AppState;
 
-pub fn router() -> Router<Arc<AppState>> {
+pub fn router(state: Arc<AppState>) -> Router {
+    let protected = Router::new()
+        .route("/api/status", get(status))
+        .route("/api/rules", get(list_rules))
+        .route("/api/run/{rule_id}", post(run_rule))
+        .route("/api/reload", post(reload))
+        .route_layer(from_fn_with_state(state.clone(), require_auth));
+
     Router::new()
         .route("/health", get(health))
-        .route("/status", get(status))
-        .route("/rules", get(list_rules))
-        .route("/run/{rule_id}", post(run_rule))
-        .route("/reload", post(reload))
+        .route("/api/login", post(login))
+        .merge(protected)
+        .with_state(state)
+}
+
+async fn require_auth(
+    State(state): State<Arc<AppState>>,
+    request: axum::http::Request<Body>,
+    next: Next,
+) -> Result<impl IntoResponse, StatusCode> {
+    if let Some(token) = &state.api_token {
+        let provided = request
+            .headers()
+            .get("authorization")
+            .and_then(|v| v.to_str().ok());
+        let valid =
+            matches!(provided, Some(v) if v.strip_prefix("Bearer ").is_some_and(|t| t == token));
+        if !valid {
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+    }
+    Ok(next.run(request).await)
+}
+
+#[derive(Deserialize)]
+struct LoginRequest {
+    token: String,
+}
+
+#[derive(Serialize)]
+struct LoginResponse {
+    ok: bool,
+}
+
+async fn login(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<LoginRequest>,
+) -> impl IntoResponse {
+    let ok = match &state.api_token {
+        Some(token) => &payload.token == token,
+        None => true,
+    };
+    let status = if ok {
+        StatusCode::OK
+    } else {
+        StatusCode::UNAUTHORIZED
+    };
+    (status, Json(LoginResponse { ok }))
 }
 
 async fn health() -> &'static str {
